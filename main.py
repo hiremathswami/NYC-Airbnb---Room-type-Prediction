@@ -2,6 +2,7 @@ from fastapi import FastAPI
 import joblib
 import pandas as pd
 from pydantic import BaseModel, Field
+from pathlib import Path
 
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -21,7 +22,8 @@ COLUMNS = ['neighbourhood_group', 'neighbourhood', 'latitude', 'longitude',
        'reviews_per_month', 'calculated_host_listings_count',
        'availability_365']
 
-model = joblib.load('model_pipeline.pkl')
+MODEL_PATH = Path(__file__).resolve().parent / 'model_pipeline.pkl'
+model = joblib.load(MODEL_PATH)
 
 class Features(BaseModel):
     latitude: float = Field(..., ge=-90, le=90, description="Latitude must be between -90 and 90 degrees.")
@@ -42,7 +44,7 @@ def greet():
 
 @app.post('/predict')
 def predict(features : Features):
-    row = pd.DataFrame([features.dict()], columns=COLUMNS, index=[0])
+    row = pd.DataFrame([features.model_dump()], columns=COLUMNS, index=[0])
     prediction=  model.predict(row)
     probability = model.predict_proba(row)
 
